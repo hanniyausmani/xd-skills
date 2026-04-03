@@ -12,8 +12,8 @@ Claude plugin skills for the Caylent Experience Design team.
 
 Click the plugin you want to install:
 
-- [**design-plugin.zip**](https://github.com/hanniyausmani/xd-skills/releases/download/v1.0.0/design-plugin.zip) — Design workflows (critique, accessibility, handoff, UX writing, and more)
-- [**vru-board-plugin.zip**](https://github.com/hanniyausmani/xd-skills/releases/download/v1.0.0/vru-board-plugin.zip) — VRU board (opportunity hunting, logging, and sync)
+- [**design-plugin-v1.0.zip**](https://github.com/hanniyausmani/xd-skills/releases/download/v1.0.0/design-plugin-v1.0.zip) — Design workflows (critique, accessibility, handoff, UX writing, and more)
+- [**vru-board-plugin-v1.0.zip**](https://github.com/hanniyausmani/xd-skills/releases/download/v1.0.0/vru-board-plugin-v1.0.zip) — VRU board (opportunity hunting, logging, and sync)
 
 The file will download to your **Downloads** folder.
 
@@ -33,6 +33,17 @@ Click the **Extensions** icon (puzzle piece) in the sidebar, or go to the menu: 
 4. Click **Open**
 
 The plugin will install and its skills will be available immediately.
+
+---
+
+## Staying up to date
+
+When a plugin is updated, the download link above will show a new version number (e.g. `v1.1`). To update:
+
+1. Check the version number in the link above against the filename you installed
+2. If there's a newer version, download it and re-upload it in Claude → Extensions → My Uploads
+
+Hanniya will notify the team in Slack when a new version is available.
 
 ---
 
@@ -62,6 +73,14 @@ Void Reclamation Unit — UX opportunity hunting and tracking.
 | `vru-opportunity-hunting` | Hunt and qualify UX opportunities |
 
 **Commands:** `/vru-log`, `/vru-scan`, `/vru-update`
+
+---
+
+## Changelog
+
+| Version | Date | What changed |
+|---|---|---|
+| v1.0 | 2026-04-03 | Initial release — design and vru-board plugins |
 
 ---
 
