@@ -12,7 +12,7 @@ Claude plugin skills for the Caylent Experience Design team.
 
 Click the plugin you want to install:
 
-- [**design-plugin-v1.0.zip**](https://github.com/hanniyausmani/xd-skills/releases/download/v1.0.0/design-plugin-v1.0.zip) — Design workflows (critique, accessibility, handoff, UX writing, and more)
+- [**design-plugin-v1.1.zip**](https://github.com/hanniyausmani/xd-skills/releases/download/v1.2.0/design-plugin-v1.1.zip) — Design workflows (critique, accessibility, handoff, UX writing, and more)
 - [**vru-board-plugin-v1.1.zip**](https://github.com/hanniyausmani/xd-skills/releases/download/v1.1.0/vru-board-plugin-v1.1.zip) — VRU board (opportunity hunting, logging, and sync)
 
 The file will download to your **Downloads** folder.
@@ -80,6 +80,7 @@ Void Reclamation Unit — UX opportunity hunting and tracking.
 
 | Version | Date | What changed |
 |---|---|---|
+| v1.1 | 2026-04-03 | design: Figma annotations now appear automatically next to the correct frame — no more asking twice |
 | v1.1 | 2026-04-03 | vru-board: scan pre-fills log entries, update now checks Gmail + Gong and gives specific action nudges |
 | v1.0 | 2026-04-03 | Initial release — design and vru-board plugins |
 
