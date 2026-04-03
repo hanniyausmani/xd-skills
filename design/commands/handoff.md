@@ -1,25 +1,26 @@
 ---
 description: Generate developer handoff specs from a design
 argument-hint: "<Figma URL or design description>"
+allowed-tools: mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__get_design_context, mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__get_metadata, mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__get_screenshot, mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__use_figma, mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__get_variable_defs
 ---
 
 # /handoff
 
-> If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../CONNECTORS.md).
+Generate comprehensive developer handoff specs from a Figma design. See the **design-handoff** skill for handoff principles and what to include.
 
-Generate comprehensive developer handoff documentation from a design. See the **design-handoff** skill for guidance on what to include and handoff principles.
+## Step 1 — Read the Figma Design
 
-## Usage
+If a Figma URL is provided in $ARGUMENTS:
 
-```
-/handoff $ARGUMENTS
-```
+1. Extract the **file key** from the URL — it's the string after `/design/` or `/file/` and before the next `/`. Example: `https://www.figma.com/design/ABC123xyz/my-file` → file key is `ABC123xyz`
+2. Extract the **node ID** from the URL — find `node-id=` in the URL params, take the value, and replace `-` with `:`. Example: `node-id=7-2` → node ID is `7:2`. Store this exact string for Step 3.
+3. Call `get_design_context` with the file key to pull exact measurements, component specs, and layer structure.
+4. Call `get_variable_defs` to retrieve design tokens (colors, spacing, typography).
+5. Call `get_screenshot` to view the design visually.
 
-Generate handoff specs for: @$1
+If no Figma URL is provided, ask the user to share one before proceeding.
 
-If a Figma URL is provided, pull the design from Figma. Otherwise, work from the provided description or screenshot.
-
-## Output
+## Step 2 — Generate the Handoff Spec
 
 ```markdown
 ## Handoff Spec: [Feature/Screen Name]
@@ -62,38 +63,19 @@ If a Figma URL is provided, pull the design from Figma. Otherwise, work from the
 - **Loading**: [Skeleton or spinner]
 - **Error**: [Error state appearance]
 
-### Animation / Motion
-| Element | Trigger | Animation | Duration | Easing |
-|---------|---------|-----------|----------|--------|
-| [Element] | [Trigger] | [Description] | [ms] | [easing] |
-
 ### Accessibility Notes
 - [Focus order]
 - [ARIA labels needed]
 - [Keyboard interactions]
 ```
 
-## If Connectors Available
+## Step 3 — Write the Annotation to Figma
 
-If **~~design tool** is connected:
-- Pull exact measurements, tokens, and component specs from Figma
-- Export assets and generate a complete spec sheet
+**This step is mandatory whenever a Figma URL was provided. Do not skip it.**
 
-If **~~project tracker** is connected:
-- Link the handoff to the implementation ticket
-- Create sub-tasks for each section of the spec
-
-## Tips
-
-1. **Share the Figma link** — I can pull exact measurements, tokens, and component info.
-2. **Mention edge cases** — "What happens with 100 items?" helps me spec boundary conditions.
-3. **Specify the tech stack** — "We use React + Tailwind" helps me give relevant implementation notes.
-
-## Writing Results to Figma
-
-**After generating the handoff spec above, always write a summary annotation directly into the Figma file** when a Figma URL was provided. Gives developers a quick reference in Figma without needing to switch to Claude.
-
-Use the `use_figma` tool with the same `fileKey`. Extract the `nodeId` from the URL (e.g. `node-id=7-2` → `"7:2"`). Run this JavaScript, replacing placeholder values with real spec data:
+Use `use_figma` with the file key from Step 1. In the JavaScript below:
+- Replace `"NODE_ID_HERE"` with the node ID string you extracted in Step 1 (e.g. `"7:2"`)
+- Replace all `[placeholder]` values with real spec data from your handoff above
 
 ```javascript
 await figma.loadFontAsync({ family: "Inter", style: "Bold" });
@@ -132,15 +114,13 @@ function addSpacer(parent,h=4){const r=figma.createRectangle();r.resize(1,h);r.f
 addText(panel, "📋 Developer Handoff Spec", 15, "Bold", "#FFFFFF");
 addText(panel, new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"}), 11, "Regular", "#6688AA");
 addDivider(panel);
-// REPLACE with the screen/component name and 1-line description
 addText(panel, "Screen: [Name] — [1-line description]", 12, "Medium", "#C8D8EE");
 addDivider(panel);
-// REPLACE items[] with key spec points from handoff output, ≤100 chars each
 const sections = [
-  { label: "🎨 Tokens", color: "#7EB8F7", items: ["color-primary: #HEX — CTAs", "spacing-md: Xpx — gaps"] },
-  { label: "📐 Layout", color: "#A78BFA", items: ["Grid: X cols, Xpx gutter", "Responsive: [key change]"] },
-  { label: "🔁 States", color: "#F2C94C", items: ["Hover: [behavior]", "Error: [behavior]"] },
-  { label: "♿ A11y",   color: "#6FCF97", items: ["Focus order: [desc]", "ARIA: [labels needed]"] },
+  { label: "🎨 Tokens", color: "#7EB8F7", items: ["[token-name: value — usage]", "[token-name: value — usage]"] },
+  { label: "📐 Layout", color: "#A78BFA", items: ["[Grid spec]", "[Responsive behavior]"] },
+  { label: "🔁 States", color: "#F2C94C", items: ["[Hover: behavior]", "[Error: behavior]"] },
+  { label: "♿ A11y",   color: "#6FCF97", items: ["[Focus order]", "[ARIA labels needed]"] },
 ];
 for (const s of sections) {
   addSpacer(panel);
@@ -150,5 +130,5 @@ for (const s of sections) {
 addSpacer(panel,2); addDivider(panel);
 addText(panel, "Full spec in the Claude conversation.", 10, "Regular", "#445566");
 figma.viewport.scrollAndZoomIntoView([panel, ...(targetNode ? [targetNode] : [])]);
-return { panelId: panel.id, message: "Handoff annotation created in Figma." };
+return { panelId: panel.id, message: "Handoff annotation created next to frame in Figma." };
 ```

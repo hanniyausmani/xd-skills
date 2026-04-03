@@ -1,28 +1,29 @@
 ---
 description: Write or review UX copy — microcopy, error messages, empty states, CTAs
-argument-hint: "<context or copy to review>"
+argument-hint: "<Figma URL or context description>"
+allowed-tools: mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__get_design_context, mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__get_screenshot, mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__use_figma
 ---
 
 # /ux-copy
 
-> If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../CONNECTORS.md).
-
 Write or review UX copy for any interface context. See the **ux-writing** skill for copy principles, patterns, and voice/tone guidance.
 
-## Usage
+## Step 1 — Read the Figma Design (if URL provided)
 
-```
-/ux-copy $ARGUMENTS
-```
+If a Figma URL is provided in $ARGUMENTS:
 
-## What I Need From You
+1. Extract the **file key** from the URL — it's the string after `/design/` or `/file/` and before the next `/`. Example: `https://www.figma.com/design/ABC123xyz/my-file` → file key is `ABC123xyz`
+2. Extract the **node ID** from the URL — find `node-id=` in the URL params, take the value, and replace `-` with `:`. Example: `node-id=7-2` → node ID is `7:2`. Store this exact string for Step 3.
+3. Call `get_design_context` to read the screen layout, understand the user flow, and check character constraints.
+4. Call `get_screenshot` to view the design in context.
 
+If no Figma URL is provided, ask the user for:
 - **Context**: What screen, flow, or feature?
 - **User state**: What is the user trying to do? How are they feeling?
 - **Tone**: Formal, friendly, playful, reassuring?
 - **Constraints**: Character limits, platform guidelines?
 
-## Output
+## Step 2 — Generate Copy Recommendations
 
 ```markdown
 ## UX Copy: [Context]
@@ -44,37 +45,13 @@ Write or review UX copy for any interface context. See the **ux-writing** skill 
 [Anything translators should know — idioms to avoid, character expansion, cultural context]
 ```
 
-## Common UX Copy Types
+## Step 3 — Write the Annotation to Figma
 
-- **CTAs**: Clear, specific, action-oriented ("Start free trial" not "Submit")
-- **Error messages**: What happened, why, and how to fix it
-- **Empty states**: Guide the user to take their first action
-- **Confirmation dialogs**: Make the consequences clear
-- **Onboarding**: Progressive disclosure, one concept at a time
-- **Tooltips**: Concise, helpful, never obvious
-- **Loading states**: Set expectations, reduce anxiety
+**This step is mandatory whenever a Figma URL was provided. Do not skip it.**
 
-## If Connectors Available
-
-If **~~knowledge base** is connected:
-- Pull your brand voice guidelines and content style guide
-- Check for existing copy patterns and terminology standards
-
-If **~~design tool** is connected:
-- View the screen context in Figma to understand the full user flow
-- Check character limits and layout constraints from the design
-
-## Tips
-
-1. **Be specific about context** — "Error message when payment fails" is better than "error message."
-2. **Share your brand voice** — "We're professional but warm" helps me match your tone.
-3. **Consider the user's emotional state** — Error messages need empathy. Success messages can celebrate.
-
-## Writing Results to Figma
-
-**When a Figma URL is provided, always write copy recommendations into the Figma file** as an annotation so writers and designers can review copy in context without switching to Claude.
-
-Use the `use_figma` tool with the same `fileKey`. Extract the `nodeId` from the URL (e.g. `node-id=7-2` → `"7:2"`). Run this JavaScript, replacing placeholder values with real copy from your output:
+Use `use_figma` with the file key from Step 1. In the JavaScript below:
+- Replace `"NODE_ID_HERE"` with the node ID string you extracted in Step 1 (e.g. `"7:2"`)
+- Replace all `[placeholder]` values with the actual recommended copy from Step 2
 
 ```javascript
 await figma.loadFontAsync({ family: "Inter", style: "Bold" });
@@ -113,14 +90,12 @@ function addSpacer(parent,h=4){const r=figma.createRectangle();r.resize(1,h);r.f
 addText(panel, "✍️ UX Copy Recommendations", 15, "Bold", "#FFFFFF");
 addText(panel, new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"}), 11, "Regular", "#887799");
 addDivider(panel);
-// REPLACE with the screen/element being written for
-addText(panel, "Context: [Screen or element name]", 12, "Medium", "#C8B8EE");
+addText(panel, "Context: [Screen or element name from design]", 12, "Medium", "#C8B8EE");
 addDivider(panel);
-// REPLACE each copyItems entry with actual recommended copy from the output
 const copyItems = [
-  { element: "CTA / Button", copy: "Recommended copy here", note: "1-line rationale" },
-  { element: "Error message", copy: "Recommended copy here", note: "1-line rationale" },
-  { element: "Empty state",   copy: "Recommended copy here", note: "1-line rationale" },
+  { element: "[Element name, e.g. CTA Button]", copy: "[Recommended copy]", note: "[1-line rationale]" },
+  { element: "[Element name, e.g. Error message]", copy: "[Recommended copy]", note: "[1-line rationale]" },
+  { element: "[Element name, e.g. Empty state]", copy: "[Recommended copy]", note: "[1-line rationale]" },
 ];
 for (const item of copyItems) {
   addSpacer(panel);
@@ -131,5 +106,5 @@ for (const item of copyItems) {
 addSpacer(panel,2); addDivider(panel);
 addText(panel, "Alternatives & rationale in the Claude conversation.", 10, "Regular", "#554466");
 figma.viewport.scrollAndZoomIntoView([panel, ...(targetNode ? [targetNode] : [])]);
-return { panelId: panel.id, message: "UX copy annotation created in Figma." };
+return { panelId: panel.id, message: "UX copy annotation created next to frame in Figma." };
 ```

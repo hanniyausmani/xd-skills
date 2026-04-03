@@ -1,31 +1,27 @@
 ---
 description: Get structured design feedback on usability, hierarchy, and consistency
 argument-hint: "<Figma URL, screenshot, or description>"
+allowed-tools: mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__get_design_context, mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__get_metadata, mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__get_screenshot, mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__use_figma
 ---
 
 # /critique
 
-> If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../CONNECTORS.md).
+Get structured design feedback across usability, visual hierarchy, and consistency. See the **design-critique** skill for the full evaluation framework.
 
-Get structured design feedback across multiple dimensions. See the **design-critique** skill for the evaluation framework and feedback principles.
+## Step 1 — Read the Figma Design
 
-## Usage
+If a Figma URL is provided in $ARGUMENTS:
 
-```
-/critique $ARGUMENTS
-```
+1. Extract the **file key** from the URL — it's the string after `/design/` or `/file/` and before the next `/`. Example: `https://www.figma.com/design/ABC123xyz/my-file` → file key is `ABC123xyz`
+2. Extract the **node ID** from the URL — find `node-id=` in the URL params, take the value, and replace `-` with `:`. Example: `node-id=7-2` → node ID is `7:2`. Store this exact string for Step 4.
+3. Call `get_design_context` with the file key to read the design, inspect components, tokens, and layer structure.
+4. Call `get_screenshot` to view the design visually.
 
-Review the design: @$1
+If no Figma URL is provided, ask the user to share a Figma URL, screenshot, or detailed description before proceeding.
 
-If a Figma URL is provided, pull the design from Figma. If a file is referenced, read it. Otherwise, ask the user to describe or share their design.
+## Step 2 — Generate the Critique
 
-## What I Need From You
-
-- **The design**: Figma URL, screenshot, or detailed description
-- **Context**: What is this? Who is it for? What stage (exploration, refinement, final)?
-- **Focus** (optional): "Focus on mobile" or "Focus on the onboarding flow"
-
-## Output
+Using what you read from Figma (or from the provided screenshot/description), produce:
 
 ```markdown
 ## Design Critique: [Design Name]
@@ -63,26 +59,13 @@ If a Figma URL is provided, pull the design from Figma. If a file is referenced,
 3. **[Third priority]** — [Why and how]
 ```
 
-## If Connectors Available
+## Step 3 — Write the Annotation to Figma
 
-If **~~design tool** is connected:
-- Pull the design directly from Figma and inspect components, tokens, and layers
-- Compare against the existing design system for consistency
+**This step is mandatory whenever a Figma URL was provided. Do not skip it.**
 
-If **~~user feedback** is connected:
-- Cross-reference design decisions with recent user feedback and support tickets
-
-## Tips
-
-1. **Share the context** — "This is a checkout flow for a B2B SaaS" helps me give relevant feedback.
-2. **Specify your stage** — Early exploration gets different feedback than final polish.
-3. **Ask me to focus** — "Just look at the navigation" gives you more depth on one area.
-
-## Writing Results to Figma
-
-**After generating the output above, always write a summary annotation directly into the Figma file** when a Figma URL was provided. Keeps critique findings visible next to the design for easy side-by-side review.
-
-Use the `use_figma` tool with the same `fileKey`. Extract the `nodeId` from the URL (e.g. `node-id=7-2` → `"7:2"`). Run this JavaScript, replacing placeholder values with real findings from your critique:
+Use `use_figma` with the file key from Step 1. In the JavaScript below:
+- Replace `"NODE_ID_HERE"` with the node ID string you extracted in Step 1 (e.g. `"7:2"`)
+- Replace all `[placeholder]` values with real findings from your critique above
 
 ```javascript
 await figma.loadFontAsync({ family: "Inter", style: "Bold" });
@@ -121,14 +104,12 @@ function addSpacer(parent,h=4){const r=figma.createRectangle();r.resize(1,h);r.f
 addText(panel, "🔍 Design Critique", 15, "Bold", "#FFFFFF");
 addText(panel, new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"}), 11, "Regular", "#7777AA");
 addDivider(panel);
-// REPLACE with the 1-2 sentence overall impression from your critique
-addText(panel, "Overall: [Replace with impression from critique output]", 12, "Regular", "#C8C8EE");
+addText(panel, "[Overall impression — 1-2 sentences from critique]", 12, "Regular", "#C8C8EE");
 addDivider(panel);
-// REPLACE items[] with actual findings from the critique, ≤100 chars each
 const sections = [
-  { label: "🔴 Critical",    color: "#FF7070", items: ["Finding — usability or hierarchy issue"] },
-  { label: "🟡 Moderate",    color: "#F2C94C", items: ["Finding — consistency or accessibility issue"] },
-  { label: "✅ What Works",  color: "#6FCF97", items: ["Strength 1", "Strength 2"] },
+  { label: "🔴 Critical",    color: "#FF7070", items: ["[Critical finding from critique]"] },
+  { label: "🟡 Moderate",    color: "#F2C94C", items: ["[Moderate finding from critique]"] },
+  { label: "✅ What Works",  color: "#6FCF97", items: ["[Strength 1]", "[Strength 2]"] },
 ];
 for (const s of sections) {
   addSpacer(panel);
@@ -138,5 +119,5 @@ for (const s of sections) {
 addSpacer(panel,2); addDivider(panel);
 addText(panel, "Full critique in the Claude conversation.", 10, "Regular", "#555577");
 figma.viewport.scrollAndZoomIntoView([panel, ...(targetNode ? [targetNode] : [])]);
-return { panelId: panel.id, message: "Critique annotation created in Figma." };
+return { panelId: panel.id, message: "Critique annotation created next to frame in Figma." };
 ```

@@ -1,19 +1,12 @@
 ---
 description: Synthesize user research into themes, insights, and recommendations
-argument-hint: "<research data, transcripts, or survey results>"
+argument-hint: "<research data, transcripts, or survey results> [optional: Figma/FigJam URL]"
+allowed-tools: mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__get_design_context, mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__get_screenshot, mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__use_figma
 ---
 
 # /research-synthesis
 
-> If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../CONNECTORS.md).
-
 Synthesize user research data into actionable insights. See the **user-research** skill for research methods, interview guides, and analysis frameworks.
-
-## Usage
-
-```
-/research-synthesis $ARGUMENTS
-```
 
 ## What I Accept
 
@@ -24,7 +17,16 @@ Synthesize user research data into actionable insights. See the **user-research*
 - NPS/CSAT responses
 - App store reviews
 
-## Output
+## Step 1 — Read Figma Context (if URL provided)
+
+If a Figma or FigJam URL is included in $ARGUMENTS:
+
+1. Extract the **file key** from the URL — it's the string after `/design/`, `/file/`, or `/board/` and before the next `/`.
+2. Extract the **node ID** from the URL — find `node-id=` in the URL params, take the value, and replace `-` with `:`. Example: `node-id=7-2` → node ID is `7:2`. Store this for Step 3.
+3. Call `get_design_context` to understand the existing artifacts on the board (journey maps, wireframes, etc.)
+4. Call `get_screenshot` to view the board visually.
+
+## Step 2 — Generate the Synthesis
 
 ```markdown
 ## Research Synthesis: [Study Name]
@@ -53,11 +55,6 @@ Synthesize user research data into actionable insights. See the **user-research*
 |---------|-------------|--------|--------|
 | [What we learned] | [What we could do] | High/Med/Low | High/Med/Low |
 
-### User Segments Identified
-| Segment | Characteristics | Needs | Size |
-|---------|----------------|-------|------|
-| [Name] | [Description] | [Key needs] | [Rough %] |
-
 ### Recommendations
 1. **[High priority]** — [Why, based on which findings]
 2. **[Medium priority]** — [Why]
@@ -65,36 +62,15 @@ Synthesize user research data into actionable insights. See the **user-research*
 
 ### Questions for Further Research
 - [What we still don't know]
-
-### Methodology Notes
-[How the research was conducted, any limitations or biases to note]
 ```
 
-## If Connectors Available
+## Step 3 — Write the Annotation to Figma
 
-If **~~user feedback** is connected:
-- Pull support tickets, feature requests, and NPS responses to supplement research data
-- Cross-reference themes with real user complaints and requests
+**This step is mandatory whenever a Figma or FigJam URL was provided. Do not skip it.**
 
-If **~~product analytics** is connected:
-- Validate qualitative findings with usage data and behavioral metrics
-- Quantify the impact of identified pain points
-
-If **~~knowledge base** is connected:
-- Search for prior research studies and findings to compare against
-- Publish the synthesis to your research repository
-
-## Tips
-
-1. **Include raw quotes** — Direct participant quotes make insights credible and memorable.
-2. **Separate observations from interpretations** — "5 of 8 users clicked the wrong button" is an observation. "The button placement is confusing" is an interpretation.
-3. **Quantify where possible** — "Most users" is vague. "7 of 10 users" is specific.
-
-## Writing Results to Figma
-
-**When a FigJam board or Figma file URL is provided, always write a synthesis summary into the board** so the team can review findings alongside journey maps and wireframes without switching tools.
-
-Use the `use_figma` tool with the `fileKey` from the board URL. Extract `nodeId` if present; use a root page node ID if not. Run this JavaScript, replacing placeholder values with real data from your synthesis:
+Use `use_figma` with the file key from Step 1. In the JavaScript below:
+- Replace `"NODE_ID_HERE"` with the node ID string you extracted in Step 1 (e.g. `"7:2"`)
+- Replace all `[placeholder]` values with real data from your synthesis above
 
 ```javascript
 await figma.loadFontAsync({ family: "Inter", style: "Bold" });
@@ -133,15 +109,13 @@ function addSpacer(parent,h=4){const r=figma.createRectangle();r.resize(1,h);r.f
 addText(panel, "🔬 Research Synthesis", 15, "Bold", "#FFFFFF");
 addText(panel, new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"}), 11, "Regular", "#558899");
 addDivider(panel);
-// REPLACE with study metadata and 2-3 sentence executive summary
-addText(panel, "Study: [Name]  •  Method: [Type]  •  Participants: X", 12, "Medium", "#B8D8EE");
-addText(panel, "[2-3 sentence executive summary from synthesis output]", 11, "Regular", "#99BBCC");
+addText(panel, "Study: [Name]  •  Method: [Type]  •  Participants: [X]", 12, "Medium", "#B8D8EE");
+addText(panel, "[2-3 sentence executive summary]", 11, "Regular", "#99BBCC");
 addDivider(panel);
 addText(panel, "📌 Key Themes", 12, "Bold", "#7EB8D4");
-// REPLACE with actual themes from synthesis, ≤100 chars each
 const themes = [
-  { name: "Theme 1: [Name] (X of Y participants)", implication: "Implication for product" },
-  { name: "Theme 2: [Name] (X of Y participants)", implication: "Implication for product" },
+  { name: "[Theme 1: Name] ([X] of [Y] participants)", implication: "[Implication for product]" },
+  { name: "[Theme 2: Name] ([X] of [Y] participants)", implication: "[Implication for product]" },
 ];
 for (const t of themes) {
   addSpacer(panel,2);
@@ -150,11 +124,10 @@ for (const t of themes) {
 }
 addSpacer(panel); addDivider(panel);
 addText(panel, "🎯 Top Recommendations", 12, "Bold", "#6FCF97");
-// REPLACE with actual top 3 recommendations
-const recs = ["1. [High priority]", "2. [Medium priority]", "3. [Lower priority]"];
+const recs = ["1. [High priority recommendation]", "2. [Medium priority recommendation]", "3. [Lower priority recommendation]"];
 for (const r of recs) addText(panel, r, 11, "Regular", "#AACCBB");
 addSpacer(panel,2); addDivider(panel);
 addText(panel, "Full synthesis with quotes & evidence in the Claude conversation.", 10, "Regular", "#335566");
 figma.viewport.scrollAndZoomIntoView([panel, ...(targetNode ? [targetNode] : [])]);
-return { panelId: panel.id, message: "Research synthesis annotation created in Figma." };
+return { panelId: panel.id, message: "Research synthesis annotation created next to frame in Figma." };
 ```

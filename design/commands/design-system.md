@@ -1,23 +1,36 @@
 ---
 description: Audit, document, or extend your design system
-argument-hint: "[audit | document | extend] <component or system>"
+argument-hint: "[audit | document | extend] <Figma URL or component>"
+allowed-tools: mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__get_design_context, mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__get_metadata, mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__get_screenshot, mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__use_figma, mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__get_variable_defs, mcp__c559ff4b-9d7d-4192-8308-d9036a7e621f__search_design_system
 ---
 
 # /design-system
 
-> If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../CONNECTORS.md).
-
-Manage your design system — audit for consistency, document components, or design new patterns.
+Manage your design system — audit for consistency, document components, or design new patterns. See the **design-system-management** skill for token naming, component structure, and design system principles.
 
 ## Usage
 
 ```
-/design-system audit                    # Full system audit
-/design-system document [component]     # Document a component
-/design-system extend [pattern]         # Design a new component or pattern
+/design-system audit <Figma URL>         # Full system audit
+/design-system document <Figma URL>      # Document a component
+/design-system extend <Figma URL>        # Design a new pattern
 ```
 
-## Output — Audit
+## Step 1 — Read the Figma Design
+
+If a Figma URL is provided in $ARGUMENTS:
+
+1. Extract the **file key** from the URL — it's the string after `/design/` or `/file/` and before the next `/`. Example: `https://www.figma.com/design/ABC123xyz/my-file` → file key is `ABC123xyz`
+2. Extract the **node ID** from the URL — find `node-id=` in the URL params, take the value, and replace `-` with `:`. Example: `node-id=7-2` → node ID is `7:2`. Store this exact string for the Figma write step.
+3. Call `get_design_context` to inspect naming, variants, and component structure.
+4. Call `get_variable_defs` to check token coverage and identify hardcoded values.
+5. Call `get_screenshot` to view the design visually.
+
+If no Figma URL is provided, ask the user to share one before proceeding.
+
+## Step 2 — Generate the Output
+
+### If audit:
 
 ```markdown
 ## Design System Audit
@@ -41,7 +54,6 @@ Manage your design system — audit for consistency, document components, or des
 | Component | States | Variants | Docs | Score |
 |-----------|--------|----------|------|-------|
 | Button | ✅ | ✅ | ⚠️ | 8/10 |
-| Input | ✅ | ⚠️ | ❌ | 5/10 |
 
 ### Priority Actions
 1. [Most impactful improvement]
@@ -49,7 +61,7 @@ Manage your design system — audit for consistency, document components, or des
 3. [Third priority]
 ```
 
-## Output — Document
+### If document:
 
 ```markdown
 ## Component: [Name]
@@ -61,21 +73,17 @@ Manage your design system — audit for consistency, document components, or des
 | Variant | Use When |
 |---------|----------|
 | [Primary] | [Main actions] |
-| [Secondary] | [Supporting actions] |
 
 ### Props / Properties
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| [prop] | [type] | [default] | [description] |
 
 ### States
 | State | Visual | Behavior |
 |-------|--------|----------|
-| Default | [description] | — |
+| Default | — | — |
 | Hover | [description] | [interaction] |
-| Active | [description] | [interaction] |
 | Disabled | [description] | Non-interactive |
-| Loading | [description] | [animation] |
 
 ### Accessibility
 - **Role**: [ARIA role]
@@ -86,12 +94,9 @@ Manage your design system — audit for consistency, document components, or des
 | ✅ Do | ❌ Don't |
 |------|---------|
 | [Best practice] | [Anti-pattern] |
-
-### Code Example
-[Framework-appropriate code snippet]
 ```
 
-## Output — Extend
+### If extend:
 
 ```markdown
 ## New Component: [Name]
@@ -99,69 +104,39 @@ Manage your design system — audit for consistency, document components, or des
 ### Problem
 [What user need or gap this component addresses]
 
-### Existing Patterns
-| Related Component | Similarity | Why It's Not Enough |
-|-------------------|-----------|---------------------|
-| [Component] | [What's shared] | [What's missing] |
-
 ### Proposed Design
 
-#### API / Props
+#### Props
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| [prop] | [type] | [default] | [description] |
 
 #### Variants
-| Variant | Use When | Visual |
-|---------|----------|--------|
-| [Variant] | [Scenario] | [Description] |
+| Variant | Use When |
+|---------|----------|
 
 #### States
-| State | Behavior | Notes |
-|-------|----------|-------|
-| Default | [Description] | — |
-| Hover | [Description] | [Interaction] |
-| Disabled | [Description] | Non-interactive |
-| Loading | [Description] | [Animation] |
+| State | Behavior |
+|-------|----------|
 
 #### Tokens Used
 - Colors: [Which tokens]
 - Spacing: [Which tokens]
-- Typography: [Which tokens]
 
 ### Accessibility
 - **Role**: [ARIA role]
 - **Keyboard**: [Expected interactions]
-- **Screen reader**: [Announced as...]
 
 ### Open Questions
 - [Decision that needs design review]
-- [Edge case to resolve]
 ```
 
-See the **design-system-management** skill for guidance on token naming, component structure, and design system principles.
+## Step 3 — Write the Annotation to Figma
 
-## If Connectors Available
+**This step is mandatory whenever a Figma URL was provided. Do not skip it.**
 
-If **~~design tool** is connected:
-- Audit components directly in Figma — check naming, variants, and token usage
-- Pull component properties and layer structure for documentation
-
-If **~~knowledge base** is connected:
-- Search for existing component documentation and usage guidelines
-- Publish updated documentation to your wiki
-
-## Tips
-
-1. **Start with an audit** — Know where you are before deciding where to go.
-2. **Document as you build** — It's easier to document a component while designing it.
-3. **Prioritize coverage over perfection** — 80% of components documented beats 100% of 10 components.
-
-## Writing Results to Figma
-
-**After generating the audit or documentation above, always write a summary annotation directly into the Figma file** when a Figma URL was provided. Keeps the audit visible next to components without leaving Figma.
-
-Use the `use_figma` tool with the same `fileKey`. Extract the `nodeId` from the URL (e.g. `node-id=7-2` → `"7:2"`). Run this JavaScript, replacing placeholder values with real data from your output:
+Use `use_figma` with the file key from Step 1. In the JavaScript below:
+- Replace `"NODE_ID_HERE"` with the node ID string you extracted in Step 1 (e.g. `"7:2"`)
+- Replace all `[placeholder]` values with real data from your output above
 
 ```javascript
 await figma.loadFontAsync({ family: "Inter", style: "Bold" });
@@ -200,14 +175,12 @@ function addSpacer(parent,h=4){const r=figma.createRectangle();r.resize(1,h);r.f
 addText(panel, "🧩 Design System Audit", 15, "Bold", "#FFFFFF");
 addText(panel, new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"}), 11, "Regular", "#6677AA");
 addDivider(panel);
-// REPLACE with real summary counts
-addText(panel, "Components: X reviewed  •  Issues: X  •  Score: X/100", 12, "Medium", "#B8C8EE");
+addText(panel, "Components: [X] reviewed  •  Issues: [X]  •  Score: [X]/100", 12, "Medium", "#B8C8EE");
 addDivider(panel);
-// REPLACE items[] with actual audit findings, ≤100 chars each
 const sections = [
-  { label: "🔴 Naming Issues", color: "#FF7070", items: ["Issue — component or token affected"] },
-  { label: "🟡 Token Gaps",    color: "#F2C94C", items: ["X hardcoded hex values in colors", "X arbitrary spacing values"] },
-  { label: "🟢 Priority Actions", color: "#6FCF97", items: ["Action 1", "Action 2"] },
+  { label: "🔴 Naming Issues", color: "#FF7070", items: ["[Naming issue found]"] },
+  { label: "🟡 Token Gaps",    color: "#F2C94C", items: ["[X] hardcoded hex values", "[X] arbitrary spacing values"] },
+  { label: "🟢 Priority Actions", color: "#6FCF97", items: ["[Priority action 1]", "[Priority action 2]"] },
 ];
 for (const s of sections) {
   addSpacer(panel);
@@ -217,5 +190,5 @@ for (const s of sections) {
 addSpacer(panel,2); addDivider(panel);
 addText(panel, "Full audit in the Claude conversation.", 10, "Regular", "#445566");
 figma.viewport.scrollAndZoomIntoView([panel, ...(targetNode ? [targetNode] : [])]);
-return { panelId: panel.id, message: "Design system annotation created in Figma." };
+return { panelId: panel.id, message: "Design system annotation created next to frame in Figma." };
 ```
