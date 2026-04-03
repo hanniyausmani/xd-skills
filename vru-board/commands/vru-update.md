@@ -1,12 +1,12 @@
 ---
-description: Sync VRU board with latest data and generate status report
-allowed-tools: mcp__adb8d8c0-f540-4eec-994c-b78b53eaa15c__document-tools-target___google_sheets_read, mcp__adb8d8c0-f540-4eec-994c-b78b53eaa15c__document-tools-target___google_sheets_write, mcp__b2b73ebd-2c91-4eb0-a5c5-f23e2584be78__slack_search_public_and_private, mcp__adb8d8c0-f540-4eec-994c-b78b53eaa15c__search_caylent_knowledge, mcp__c1fc4002-5f49-5f9d-a4e5-93c4ef5d6a75__google_drive_search, mcp__adb8d8c0-f540-4eec-994c-b78b53eaa15c__slack-tools-target___slack_search
+description: Check active VRU opps for updates by cross-referencing Slack, Gmail, Drive, and Gong
+allowed-tools: mcp__adb8d8c0-f540-4eec-994c-b78b53eaa15c__document-tools-target___google_sheets_read, mcp__adb8d8c0-f540-4eec-994c-b78b53eaa15c__document-tools-target___google_sheets_write, mcp__b2b73ebd-2c91-4eb0-a5c5-f23e2584be78__slack_search_public_and_private, mcp__adb8d8c0-f540-4eec-994c-b78b53eaa15c__slack-tools-target___slack_search, mcp__adb8d8c0-f540-4eec-994c-b78b53eaa15c__search_caylent_knowledge, mcp__c1fc4002-5f49-5f9d-a4e5-93c4ef5d6a75__google_drive_search, mcp__9bdeb2aa-190b-481f-a503-78592ec45295__gmail_search_messages, mcp__9bdeb2aa-190b-481f-a503-78592ec45295__gmail_read_message
 argument-hint: [optional: specific opp ID or client name to focus on]
 ---
 
-You are acting as the VRU Recovery Lead — syncing the board, checking on active opportunities, and generating a status report.
+You are acting as the VRU Recovery Lead — checking in on active opportunities, finding out what's happened since the last update, and telling the team exactly what to do next.
 
-If $ARGUMENTS contains a specific Opp ID (e.g., VRU-058) or client name, focus the update on that opportunity. Otherwise, run a full board sync.
+If $ARGUMENTS contains a specific Opp ID (e.g., VRU-058) or client name, focus only on that opportunity. Otherwise, run a full check across all active opps.
 
 ## Step 1 — Read the Full VRU Board
 
@@ -16,76 +16,87 @@ Read all current data from the VRU board:
 
 Parse all rows. Skip rows where Reclamation Stage starts with "7." (closed/lost/won) unless $ARGUMENTS specifies one by ID.
 
-For each active opportunity, note:
-- Opp ID, Client, Stage, Next Action, Next Action Date, Owner(s), Status Notes
+For each active opportunity, extract and store:
+- Opp ID, Client Name, Source, Related Project
+- AE / CSA, Owner, Scavenger, Hunter, Interceptor, Reclaimer
+- Reclamation Stage, Next Action, Next Action Date, Status Notes
 
-## Step 2 — Check for Overdue Actions
+## Step 2 — Parse Next Actions Intelligently
 
-Flag any opportunities where:
-- Next Action Date is in the past (compare to today's date)
-- Next Action cell is empty but stage is not 1 (Scavenged)
-- Stage has not changed in a long time (no recent Status Notes activity)
+For each active opportunity, carefully read the **Next Action** and **Status Notes** fields. Extract the intent:
 
-## Step 3 — Enrich with Latest Signals
+- **"reach out to [person] in [#channel]"** → Search Slack for that channel + that person's name. Look for their reply or any relevant messages since the last Status Notes entry.
+- **"message [person] about [topic]"** → Search Slack for that person + the client/project name. Check if they responded.
+- **"email [person]"** or **"follow up with [person]"** → Search Gmail for that person's name + client name. Look for a reply.
+- **"check Gong call"** or **"review call with [client]"** → Search Gmail for `from:gong.io [client name]` to find a recent call summary.
+- **"update in Drive"** or **"check proposal"** → Search Google Drive for the client name and look for recently modified docs.
+- **"wait for response"** or **"pending [person]"** → Search Slack and Gmail for any message from that person related to the project.
 
-For each active opportunity, search for recent updates:
+If the Next Action is vague or missing, search broadly: Slack for the client name (last 7 days), Gmail for the client name (last 7 days), and Drive for recently modified docs mentioning the client.
 
-**Slack search** (last 7 days): Search by client name or project name
-- Look for: mentions of the client, new messages in relevant threads, status changes
+## Step 3 — Find What's Actually Happened
 
-**EVO / Caylent knowledge search**: Search by client name or project name
-- Look for: proposal updates, stage changes, new documents
+For each opp, run the targeted searches based on Step 2. You are looking for evidence that:
+- The person they were supposed to reach out to has responded
+- New information has surfaced about the client or project
+- The stage has advanced (UX is now in scope, proposal sent, etc.)
+- Something has stalled or gone cold
 
-**Google Drive search**: Search by client name
-- Look for: recently modified proposals, SOWs, or ROM documents
+Be specific in what you report. Do not say "some activity found in Slack." Instead say:
+> "Matthew replied in #caylent-delivery on April 1st: 'Yes, let's set up a call this week.' You should respond and propose a time."
 
-For each opportunity with new signals, draft a brief update note (1-2 sentences max).
+If nothing new was found for an opp, say so clearly.
 
-## Step 4 — Prepare Board Updates
+## Step 4 — Prepare Update Summaries
 
-For each opportunity where new information was found, prepare a row update:
-- Update the Status Notes column (V) with new information, prepend with today's date
-- Update the Next Action column (T) if the current action is clearly stale
-- Update the Reclamation Stage column (S) if stage has advanced
+For each opp where something was found, prepare a plain-language update and a suggested next action. Format as:
 
-Do NOT change Owner, Scavenger, Hunter, Interceptor, or Reclaimer fields unless user explicitly asks.
+---
+**[Opp ID] — [Client Name]** · Stage: [current stage]
 
-Ask the user to confirm updates before writing:
-"I found updates for [N] opportunities. Here's what I plan to write back to the board — confirm to proceed?"
+**What happened:** [1-2 sentences on what was found — be specific, quote messages if relevant]
 
-Show a preview table:
-| Opp ID | Client | Field | Current Value | New Value |
-|--------|--------|-------|---------------|-----------|
+**Suggested next step:** [Concrete, actionable — e.g., "Reply to Matthew in #caylent-delivery and propose a call for this week" or "Email Sarah with the updated ROM — she's waiting on it"]
 
-## Step 5 — Write Confirmed Updates
+**Board update:** Update Status Notes to: "[today's date] — [brief summary of what was found]"
+---
 
-After user confirmation, write the approved updates to the Google Sheet:
-- Spreadsheet ID: `1Y6nRhU9BnLBk0H5o_lh3DbvhMTiKESMzsT_hIWK2Cfc`
-- Write each cell update individually to avoid overwriting unrelated columns
+For opps with no new activity, group them at the end in a single "No updates found" list.
+
+## Step 5 — Confirm and Write Board Updates
+
+Present all proposed Status Notes updates to the user before writing anything:
+
+> "Here's what I plan to update on the board — confirm to proceed, or adjust anything:"
+
+| Opp ID | Client | Field | New Value |
+|--------|--------|-------|-----------|
+| VRU-### | ... | Status Notes | [today's date] — ... |
+
+Only write to the sheet after the user confirms. Update each cell individually — do not overwrite unrelated columns.
+
+Do NOT change Owner, Scavenger, Hunter, Interceptor, or Reclaimer fields unless the user explicitly asks.
 
 ## Step 6 — Generate Status Report
 
-Present a structured status report:
+After updates are written (or if the user skips writing), present a focused action report:
 
 ---
-**🌌 VRU Board Status Report — [Today's Date]**
+**VRU Status Report — [Today's Date]**
+
+**Needs Your Attention**
+[Opps with clear next steps — listed with the specific action to take, in priority order]
+
+**Active — No Blockers**
+[Opps that are on track with no immediate action needed]
+
+**No Updates Found**
+[Opps where nothing new surfaced — may need a manual check]
 
 **Pipeline Summary**
-- Total active opportunities: N
-- By stage: [stage breakdown]
+- Active opps: N
+- By stage: [breakdown]
 - High priority: [list]
-- Overdue actions: [list with owner names]
-
-**Active Opportunities — Quick View**
-| Opp ID | Client | Stage | Owner | Next Action | Due |
-|--------|--------|-------|-------|-------------|-----|
-[table of all active opps, sorted by priority then due date]
-
-**Needs Attention**
-[List of opps that are overdue, stalled, or missing next actions — with suggested nudge]
-
-**Recent Wins / Movement**
-[Any opps that advanced stages or have positive signals this week]
 ---
 
-Keep the report concise. Prioritize action items over description.
+Keep the report action-first. The most important thing is telling the team exactly what to do next for each opp, not describing what's already on the board.
