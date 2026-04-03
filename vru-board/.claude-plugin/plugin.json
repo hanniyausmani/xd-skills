@@ -1,0 +1,9 @@
+{
+  "name": "vru-board",
+  "version": "0.1.0",
+  "description": "Void Reclamation Unit — UX opportunity hunting, board sync, and opportunity logging for the Caylent XD team.",
+  "author": {
+    "name": "Caylent Experience Design"
+  },
+  "keywords": ["vru", "ux", "opportunities", "caylent", "xd", "reclamation"]
+}
