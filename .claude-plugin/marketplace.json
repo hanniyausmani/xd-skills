@@ -1,0 +1,19 @@
+{
+  "name": "xd-skills",
+  "description": "Caylent Experience Design plugins — Void Reclamation Unit and design workflow tools.",
+  "owner": {
+    "name": "Hanniya Usmani"
+  },
+  "plugins": [
+    {
+      "name": "vru-board",
+      "source": "./vru-board",
+      "description": "Void Reclamation Unit — UX opportunity hunting, board sync, and opportunity logging for the Caylent XD team."
+    },
+    {
+      "name": "design",
+      "source": "./design",
+      "description": "Accelerate design workflows — critique, design system management, UX writing, accessibility audits, research synthesis, and dev handoff."
+    }
+  ]
+}
